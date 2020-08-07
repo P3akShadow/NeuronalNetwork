@@ -4,6 +4,8 @@ import java.util.Arrays;
 
 public class NetworkTrainer {
     static final double D = 1e-9;
+    static final int DEVIATION_POWER = 7;
+    static final double DEVIATION_MIN = 0.01;
 
     private Network[] networks;
     double[][][] trainingData;      //[0]: inputs; [1]: outputs; [0][i] input 1
@@ -20,6 +22,21 @@ public class NetworkTrainer {
         }
     }
 
+    public Network improveAllNeurons(){
+        for(int i = networks[0].getNumOfLayers() - 1; i >= 1; i--){
+            System.out.println("Layer: " + i);
+            improveLayer(i);
+        }
+        return networks[0];
+    }
+
+    public Network improveLayer(int layer){
+        for(int i = 0; i < networks[0].getSizeOfLayer(layer); i++){
+            improveNeuron(layer, i);
+        }
+        return networks[0];
+    }
+
     public Network improveNeuron(int layer, int neuron) {
         double[] desiredValues = desiredValues(layer, neuron);
 
@@ -34,11 +51,11 @@ public class NetworkTrainer {
             oldDeviation = calculateDeviation();
 
             double previousLayerSize = networks[0].getSizeOfLayer(layer - 1);
-            gradientDecentWeight(layer, neuron, previousLayerSize / 100, desiredValues);
-            gradientDecentBias(layer, neuron, previousLayerSize/200, desiredValues);
+            gradientDecentWeight(layer, neuron, previousLayerSize / 500, desiredValues);
+            gradientDecentBias(layer, neuron, previousLayerSize / 1000, desiredValues);
             flushNetworks();
 
-        } while (oldDeviation - calculateDeviation() > oldDeviation / 1000000 && reps < 100);
+        } while (oldDeviation - calculateDeviation() > oldDeviation / 1000000 && reps < 10);
 
         return networks[0];
     }
@@ -99,17 +116,14 @@ public class NetworkTrainer {
     }
 
     public double calculateDeviation(int layer, double[][] expectedResults) {
+        return  calculateDeviation(layer, expectedResults, DEVIATION_POWER);
+    }
+
+    public double calculateDeviation(int layer, double[][] expectedResults, int power) {
         double sum = 0;
 
-        int layerLength = networks[0].getSizeOfLayer(layer);
-
         for (int i = 0; i < networks.length; i++) {
-            for (int j = 0; j < layerLength; j++) {
-                double expectedValue = expectedResults[i][j];
-                double actualValue = networks[i].getValue(layer, j);
-
-                sum += (expectedValue - actualValue) * (expectedValue - actualValue);
-            }
+            sum += calculateDeviation(i, layer, expectedResults, power);
         }
 
         return sum;
@@ -118,10 +132,10 @@ public class NetworkTrainer {
     public double calculateDeviation(int network) {
         int lastLayerIndex = networks[0].getNumOfLayers() - 1;
 
-        return calculateDeviation(network, lastLayerIndex, trainingData[1]);
+        return calculateDeviation(network, lastLayerIndex, trainingData[1], DEVIATION_POWER);
     }
 
-    public double calculateDeviation(int network, int layer, double[][] expectedResults) {
+    public double calculateDeviation(int network, int layer, double[][] expectedResults, int power) {
         double sum = 0;
 
         int layerLength = networks[0].getSizeOfLayer(layer);
@@ -130,7 +144,14 @@ public class NetworkTrainer {
             double expectedValue = expectedResults[network][j];
             double actualValue = networks[network].getValue(layer, j);
 
-            sum += (expectedValue - actualValue) * (expectedValue - actualValue);
+            double addedValue = (expectedValue - actualValue) * (expectedValue - actualValue);
+            addedValue += DEVIATION_MIN;
+
+            for(int k = 0; k < power; k++){
+                addedValue *= addedValue;
+            }
+
+            sum += addedValue;
         }
 
         return sum;
@@ -175,6 +196,9 @@ public class NetworkTrainer {
             abs += gradient[i] * gradient[i];
         }
         abs = Math.sqrt(abs);
+        if(! (abs > 0)){
+            abs = Double.MIN_NORMAL;
+        }
 
         for (int i = 0; i < gradient.length; i++) {
             gradient[i] /= abs;
@@ -301,13 +325,14 @@ public class NetworkTrainer {
 
         for (int i = 0; i < networks.length; i++) {
             for (int j = 0; j < layerLength; j++) {
-                String expectedValue = "EXPECTED:" + "Network" + i + " Neuron" + j + ": " + trainingData[1][i][j];
-                String actualValue = "Actual:" + "Network" + i + " Neuron" + j + ": " + networks[i].getValue(lastLayerIndex, j);
+                String expectedValue = "EXPECTED:" + "Network " + i + " Neuron" + j + ": " + trainingData[1][i][j];
+                String actualValue = "Actual:" + "Network " + i + " Neuron" + j + ": " + networks[i].getValue(lastLayerIndex, j);
                 sb.append(expectedValue + "\n");
                 sb.append(actualValue + "\n");
             }
         }
 
+        System.out.println(sb.toString());
         return sb.toString();
     }
 }

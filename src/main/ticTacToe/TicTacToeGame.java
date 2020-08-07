@@ -1,4 +1,4 @@
-package main.TicTacToe;
+package main.ticTacToe;
 
 import main.network.Network;
 
@@ -71,6 +71,9 @@ public class TicTacToeGame {
 
             do{
                 move = playerX.play(gameState, 1);
+                if(gameState[move] != 0){
+                    System.out.println("ERROR: Field already occupied");
+                }
             } while(gameState[move] != 0);
 
             moveHistory[currentMove] = move;
@@ -85,6 +88,9 @@ public class TicTacToeGame {
 
             do{
                 move = playerO.play(gameState, -1);
+                if(gameState[move] != 0){
+                    System.out.println("ERROR: Field already occupied");
+                }
             } while(gameState[move] != 0);
 
             moveHistory[currentMove] = move;

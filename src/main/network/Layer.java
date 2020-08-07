@@ -59,6 +59,12 @@ public class Layer {
             double sum = biases[i];
 
             for(int j = 0; j < weights[i].length; j++){
+
+                if(! (previousLayer.values[j] >= 0 && previousLayer.values[j] <= 1)){
+                    System.out.println("Malformed value: " + previousLayer.values[j] + " in Layer with size " + previousLayer.getSize());
+                    System.exit(1);
+                }
+
                 sum += previousLayer.values[j] * weights[i][j];
             }
 
@@ -67,6 +73,12 @@ public class Layer {
     }
 
     public static double sigmoid(double x){
+        if(x > 60){
+            return 1;
+        } else if(x < -60){
+            return 0;
+        }
+
         return 1 / (1 + Math.pow(base, -x));
     }
 
@@ -91,6 +103,11 @@ public class Layer {
     }
 
     public void setValue(int neuron, double value) {
+        if(! (value >= 0 && value <= 1)){
+            System.err.println("ERROR: all values of a must be between 0 and 1");
+            return;
+        }
+
         values[neuron] = value;
     }
 
@@ -126,6 +143,11 @@ public class Layer {
 
     //this will recalculate the value that is changed through the weight change, too.
     protected void setWeight(int neuron, int connection, double newWeight){
+        if(! (newWeight >= -1000 && newWeight <= 1000)){
+            System.err.println("ERROR: all weights of a must be between -1000 and 1000");
+            return;
+        }
+
         weights[neuron][connection] = newWeight;
 
         double sum = biases[neuron];
@@ -143,6 +165,11 @@ public class Layer {
     }
 
     protected void setBias(int neuron, double newBias){
+        if(! (newBias >= -1000 && newBias <= 1000)){
+            System.err.println("ERROR: all biases of a must be between -1000 and 1000");
+            return;
+        }
+
         biases[neuron] = newBias;
 
         double sum = biases[neuron];

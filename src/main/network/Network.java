@@ -48,6 +48,16 @@ public class Network {
         }
     }
 
+    public void randomiseAdjusted(double maxWeightSum, double maxBias){
+        for(int i = 1; i < layers.length; i++){
+            int previousLayerSize = getSizeOfLayer(i - 1);
+            double maxWeight = previousLayerSize / maxWeightSum;
+
+            layers[i].setRandomWeights(maxWeight);
+            layers[i].setRandomBiases(maxBias);
+        }
+    }
+
     public void applyNetwork(Network network){
         for(int i = 1; i < layers.length; i++){
             layers[i].setWeightsAndBiases(network.layers[i].getWeights(), network.layers[i].getBiases());

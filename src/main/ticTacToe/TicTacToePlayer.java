@@ -1,4 +1,4 @@
-package main.TicTacToe;
+package main.ticTacToe;
 
 /**
  * This Interface provides a play method for a Tic Tac Toe Player. Tic Tac Toe Game will have two Tic Tac Toe Players.

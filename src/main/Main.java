@@ -1,17 +1,21 @@
 package main;
 
-import main.TicTacToe.TicTacToeGame;
-import main.TicTacToe.TicTacToePlayer;
-import main.TicTacToe.TicTacToeRandomPlayer;
+import main.digitRecognition.DataImport;
+import main.network.Layer;
+import main.ticTacToe.TicTacToeAddToTwoPlayer;
+import main.ticTacToe.TicTacToeGame;
+import main.ticTacToe.TicTacToePlayer;
 import main.network.Network;
 import main.network.NetworkTrainer;
-
-import java.sql.SQLOutput;
-import java.util.Arrays;
 
 public class Main {
 
     public static void main(String[] args) {
+        //ticTacToeDemo();
+        digitRecognitionDemo();
+    }
+
+    public static void ticTacToeDemo(){
         /*
         Network nw = new Network(new int[]{2, 2, 1});
 
@@ -22,8 +26,8 @@ public class Main {
         System.out.println(nw);
 
         */
-        TicTacToePlayer playerX = new TicTacToeRandomPlayer();
-        TicTacToePlayer playerO = new TicTacToeRandomPlayer();
+        TicTacToePlayer playerX = new TicTacToeAddToTwoPlayer();
+        TicTacToePlayer playerO = new TicTacToeAddToTwoPlayer();
         TicTacToeGame[] games = new TicTacToeGame[1000];
         for(int i = 0; i < games.length; i++){
             TicTacToeGame game = new TicTacToeGame(playerX, playerO);
@@ -32,7 +36,7 @@ public class Main {
         }
 
         Network toBeTrained = new Network(new int[]{19, 10, 5, 3, 2, 1});
-        toBeTrained.randomiseWeightsAndBiases(5, 9);
+        toBeTrained.randomiseWeightsAndBiases(4, 8);
 
         System.out.println("Initial Network:");
         System.out.println(TicTacToeGame.calculateDerivation(toBeTrained, games, 69));
@@ -92,8 +96,60 @@ public class Main {
         System.out.println(TicTacToeGame.calculateDerivation(toBeTrained, games, 420));
         System.out.println(TicTacToeGame.calculateDerivation(toBeTrained, games, 69420));
 
-        //System.out.println(trainer.printDerivation());
+        trainer.printDerivation();
+    }
 
+    public static void digitRecognitionDemo(){
+        String path = "C:\\Users\\David\\Repos\\NeuronalNetwork2020\\digitFiles\\data";
+        int[][][] examples = new int[10][][];
 
+        for(int i = 0; i < examples.length; i++){
+            examples[i] = DataImport.importFile(path + i);
+        }
+
+        double[][][] trainingData = new double[2][100][];
+
+        for(int i = 0; i < trainingData[1].length; i++){
+            trainingData[1][i] = new double[10];
+            trainingData[1][i][i / 10] = 1;
+        }
+
+        for(int i = 0; i < trainingData[0].length; i++){
+            trainingData[0][i] = new double[24*24];
+
+            for(int j = 0; j < trainingData[0][i].length; j++) {
+                trainingData[0][i][j] = (double) examples[i / 10][i % 10][j] / 256;
+            }
+        }
+
+        Network recoNet = new Network(new int[]{24*24, 12*12, 50, 10});
+        recoNet.randomiseAdjusted(5, 9);
+
+        NetworkTrainer recoTrainer = new NetworkTrainer(recoNet, trainingData);
+
+        System.out.println("Initial Network:");
+        System.out.println(recoTrainer.calculateDeviation());
+
+        double history = 100000;
+        double current = recoTrainer.calculateDeviation();
+        int i = 0;
+
+        System.out.println("Training logs:");
+        while(history - current > 0.01 && i < 10000) {
+            recoTrainer.improveAllNeurons();
+
+            history = current;
+            current = recoTrainer.calculateDeviation();
+            i++;
+            if(i % 1 == 0) {
+                System.out.println(current);
+                System.out.println(history - current);
+            }
+
+        }
+
+        System.out.println("final Results:");
+        System.out.println(recoTrainer.calculateDeviation());
+        recoTrainer.printDerivation();
     }
 }
