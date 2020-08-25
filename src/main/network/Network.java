@@ -1,5 +1,7 @@
 package main.network;
 
+import java.util.Random;
+
 /**
  * This class represents a neuronal Network. It consists of Layers, where the information is stored.
  *
@@ -39,6 +41,38 @@ public class Network {
         }
 
         applyNetwork(network);
+    }
+
+    public Network randomNeighbor(double maxMultiplicativeDeviation, double maxAdditiveDeviation, Random rand){
+        Network returnNetwork = new Network(this);
+
+        for(int i = 1; i < getNumOfLayers(); i++){
+            for(int j = 0; j < getSizeOfLayer(i); j++){
+                for(int weightIndex = 0; weightIndex < getSizeOfLayer(i - 1); weightIndex++){
+                    //max multiplicative deviation: 0.x -> values are between 1 - 0.x and 2 + 0.x
+                    double multiplicativeDeviation = (2 * maxMultiplicativeDeviation * rand.nextDouble())
+                            - maxMultiplicativeDeviation + 1;
+                    double additiveDeviation = (2 * maxAdditiveDeviation * rand.nextDouble()) - maxAdditiveDeviation;
+
+                    double weight = returnNetwork.getWeight(i, j, weightIndex);
+                    weight *= multiplicativeDeviation;
+                    weight += additiveDeviation;
+                    returnNetwork.setWeight(i, j, weightIndex, weight);
+                }
+
+                double multiplicativeDeviation = (2 * maxMultiplicativeDeviation * rand.nextDouble())
+                        - maxMultiplicativeDeviation + 1;
+                double additiveDeviation = (2 * maxAdditiveDeviation * rand.nextDouble()) - maxAdditiveDeviation;
+
+
+                double bias = returnNetwork.getBias(i, j);
+                bias *= multiplicativeDeviation;
+                bias += additiveDeviation;
+                returnNetwork.setBias(i, j, bias);
+            }
+        }
+
+        return returnNetwork;
     }
 
     public void randomiseWeightsAndBiases(double maxWeight, double maxBias){

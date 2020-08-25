@@ -4,11 +4,11 @@ import java.util.Arrays;
 
 public class NetworkTrainer {
     static final double D = 1e-9;
-    static final int DEVIATION_POWER = 7;
-    static final double DEVIATION_MIN = 0.01;
+    static final int DEVIATION_POWER = 3;
+    static final double DEVIATION_MIN = 0;
 
     private Network[] networks;
-    double[][][] trainingData;      //[0]: inputs; [1]: outputs; [0][i] input 1
+    double[][][] trainingData;      //[0]: inputs; [1]: outputs; [0][i] input i
 
 
     public NetworkTrainer(Network network, double[][][] trainingData) {
@@ -20,6 +20,11 @@ public class NetworkTrainer {
             networks[i] = new Network(network);
             networks[i].newInput(trainingData[0][i]);
         }
+    }
+
+    public void setTrainingData(double [][][] trainingData){
+        this.trainingData = trainingData;
+        flushNetworks();
     }
 
     public Network improveAllNeurons(){
@@ -51,8 +56,8 @@ public class NetworkTrainer {
             oldDeviation = calculateDeviation();
 
             double previousLayerSize = networks[0].getSizeOfLayer(layer - 1);
-            gradientDecentWeight(layer, neuron, previousLayerSize / 500, desiredValues);
-            gradientDecentBias(layer, neuron, previousLayerSize / 1000, desiredValues);
+            gradientDecentWeight(layer, neuron, previousLayerSize / 1000, desiredValues);
+            gradientDecentBias(layer, neuron, previousLayerSize / 2000, desiredValues);
             flushNetworks();
 
         } while (oldDeviation - calculateDeviation() > oldDeviation / 1000000 && reps < 10);
@@ -334,5 +339,38 @@ public class NetworkTrainer {
 
         System.out.println(sb.toString());
         return sb.toString();
+    }
+
+    /**
+     * This method just works for training data with excactly one 1 as desired output, the rest shall be 0.
+     * @return
+     */
+    public int calculateMisjudgements(){
+        flushNetworks();
+
+        int numOfMisjudgements = 0;
+        int lastLayer = networks[0].getNumOfLayers() - 1;
+
+        for(int i = 0; i < networks.length; i++){
+            double maxValue = networks[i].getValue(lastLayer, 0);
+            int maxValueIndex = 0;
+            int correctJudgement = -1;
+
+            for(int j = 1; j < networks[i].getSizeOfLayer(lastLayer); j++){
+                if(maxValue < networks[i].getValue(lastLayer, j)){
+                    maxValueIndex = j;
+                }
+
+                if(trainingData[1][i][j] > 0.5){
+                    correctJudgement = j;
+                }
+            }
+
+            if(correctJudgement != maxValueIndex){
+                numOfMisjudgements++;
+            }
+        }
+
+        return numOfMisjudgements;
     }
 }

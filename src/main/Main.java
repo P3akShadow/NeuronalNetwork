@@ -8,6 +8,8 @@ import main.ticTacToe.TicTacToePlayer;
 import main.network.Network;
 import main.network.NetworkTrainer;
 
+import java.util.Random;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -122,9 +124,21 @@ public class Main {
             }
         }
 
-        Network recoNet = new Network(new int[]{24*24, 12*12, 50, 10});
+        Network recoNet = new Network(new int[]{24*24, 150, 50, 10});
         recoNet.randomiseAdjusted(5, 9);
 
+        NetworkTrainer recoTrainer = new NetworkTrainer(recoNet, trainingData);
+
+        Random rnd = new Random();
+        NetworkTrainer secondTrainer =
+                new NetworkTrainer(recoNet.randomNeighbor(0.2, 0.001, rnd), trainingData);
+
+        System.out.println(recoTrainer.calculateDeviation());
+        System.out.println(recoTrainer.calculateMisjudgements());
+        System.out.println(secondTrainer.calculateDeviation());
+        System.out.println(secondTrainer.calculateMisjudgements());
+
+        /*
         NetworkTrainer recoTrainer = new NetworkTrainer(recoNet, trainingData);
 
         System.out.println("Initial Network:");
@@ -132,24 +146,73 @@ public class Main {
 
         double history = 100000;
         double current = recoTrainer.calculateDeviation();
-        int i = 0;
+        int reps = 0;
 
         System.out.println("Training logs:");
-        while(history - current > 0.01 && i < 10000) {
+        while(history - current > 0.01 && reps < 50) {
             recoTrainer.improveAllNeurons();
 
             history = current;
             current = recoTrainer.calculateDeviation();
-            i++;
-            if(i % 1 == 0) {
+            reps++;
+
+            if(reps % 1 == 0) {
                 System.out.println(current);
                 System.out.println(history - current);
             }
+
+            trainingData = new double[2][100][];
+
+            for(int i = 0; i < trainingData[1].length; i++){
+                trainingData[1][i] = new double[10];
+                trainingData[1][i][i / 10] = 1;
+            }
+
+            for(int i = 0; i < trainingData[0].length; i++){
+                trainingData[0][i] = new double[24*24];
+
+                for(int j = 0; j < trainingData[0][i].length; j++) {
+
+                    trainingData[0][i][j] = (double) examples[i / 10][(i % 10) + 10 * reps][j] / 256;
+                }
+            }
+
+            recoTrainer.setTrainingData(trainingData);
 
         }
 
         System.out.println("final Results:");
         System.out.println(recoTrainer.calculateDeviation());
         recoTrainer.printDerivation();
+
+        int[] maxValues = new int[100];
+
+        double[][] values = new double[10][];     //pos int Network; second: Network
+
+        for(int i = 0; i < values.length; i++){
+            values[i] = recoTrainer.getValues(3, i);
+        }
+
+        int correct = 0;
+
+        for(int i = 0; i < 100; i++){
+            int localMaxInd = 0;
+            double localMax = values[0][i];
+
+            for(int j = 0; j < 10; j++){
+                if(localMax < values[j][i]){
+                    localMax = values[j][i];
+                    localMaxInd = j;
+                }
+            }
+
+            if(localMaxInd == i/10){
+                correct++;
+            }
+        }
+
+        System.out.println("correct percentage: " + correct);
+        */
+
     }
 }
